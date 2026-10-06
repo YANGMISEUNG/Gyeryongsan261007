@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10월 7일 계룡산 당일 여행 가이드 (신원사-연천봉-갑사)</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        },
+                        autumn: {
+                            500: '#d97706',
+                            600: '#b45309',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .tab-btn.active {
+            color: #15803d;
+            border-bottom-color: #15803d;
+            font-weight: 700;
+        }
+        #map {
+            height: 380px;
+            width: 100%;
+            border-radius: 0.75rem;
+            z-index: 1;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        /* Touch target improvements */
+        .touch-btn {
+            min-height: 44px;
+        }
+    </style>
+</head>
+<body class="pb-24 md:pb-12 min-h-screen flex flex-col justify-between">
+
+    <header class="bg-gradient-to-r from-emerald-900 via-green-800 to-amber-900 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-4xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="bg-amber-500/30 text-amber-200 text-xs px-2.5 py-0.5 rounded-full font-medium border border-amber-400/30">
+                            <i class="fa-solid fa-calendar-day mr-1"></i> 2026년 10월 7일 (수)
+                        </span>
+                        <span class="bg-white/20 text-white text-xs px-2.5 py-0.5 rounded-full font-medium">
+                            <i class="fa-solid fa-user-group mr-1"></i> 60대 부부 (경로1인 할인)
+                        </span>
+                    </div>
+                    <h1 class="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                        <i class="fa-solid fa-mountain-sun text-amber-400"></i> 계룡산 당일 횡단 여행
+                    </h1>
+                    <p class="text-xs text-emerald-100 mt-1 flex items-center gap-1">
+                        <span>동산동 ➔ GTX-A ➔ KTX ➔ 신원사 ➔ 연천봉(742m) ➔ 갑사</span>
+                    </p>
+                </div>
+                <button onclick="toggleModal('emergency-modal')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-2 rounded-lg font-bold shadow flex flex-col items-center justify-center border border-red-400 touch-btn">
+                    <i class="fa-solid fa-phone-volume text-sm mb-0.5"></i>
+                    <span>비상/택시</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Summary Strip -->
+        <div class="bg-black/20 backdrop-blur-sm border-t border-white/10 py-2">
+            <div class="max-w-4xl mx-auto px-4 flex justify-between items-center text-xs text-emerald-50">
+                <div class="flex items-center gap-3">
+                    <span><i class="fa-solid fa-route text-amber-400 mr-1"></i> 등산: 약 6.3km</span>
+                    <span><i class="fa-solid fa-stopwatch text-amber-400 mr-1"></i> 산행: ~4시간</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="trip-status" class="bg-amber-500 text-slate-900 font-bold px-2 py-0.5 rounded">
+                        일정 준비중
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="bg-white border-b border-slate-200 sticky top-[92px] z-20 shadow-sm">
+        <div class="max-w-4xl mx-auto px-2 flex justify-between overflow-x-auto no-scrollbar">
+            <button onclick="switchTab('timeline')" id="tab-timeline" class="tab-btn active text-slate-600 hover:text-green-700 py-3 px-3 text-sm font-medium border-b-2 border-transparent transition-all flex items-center gap-1.5 whitespace-nowrap">
+                <i class="fa-solid fa-clock text-base"></i> 일정 타임라인
+            </button>
+            <button onclick="switchTab('map')" id="tab-map" class="tab-btn text-slate-600 hover:text-green-700 py-3 px-3 text-sm font-medium border-b-2 border-transparent transition-all flex items-center gap-1.5 whitespace-nowrap">
+                <i class="fa-solid fa-map-location-dot text-base"></i> 지도 & 코스
+            </button>
+            <button onclick="switchTab('hiking')" id="tab-hiking" class="tab-btn text-slate-600 hover:text-green-700 py-3 px-3 text-sm font-medium border-b-2 border-transparent transition-all flex items-center gap-1.5 whitespace-nowrap">
+                <i class="fa-solid fa-person-hiking text-base"></i> 등산 상세가이드
+            </button>
+            <button onclick="switchTab('food')" id="tab-food" class="tab-btn text-slate-600 hover:text-green-700 py-3 px-3 text-sm font-medium border-b-2 border-transparent transition-all flex items-center gap-1.5 whitespace-nowrap">
+                <i class="fa-solid fa-utensils text-base"></i> 신원사 맛집
+            </button>
+            <button onclick="switchTab('budget')" id="tab-budget" class="tab-btn text-slate-600 hover:text-green-700 py-3 px-3 text-sm font-medium border-b-2 border-transparent transition-all flex items-center gap-1.5 whitespace-nowrap">
+                <i class="fa-solid fa-calculator text-base"></i> 예상 경비
+            </button>
+            <button onclick="switchTab('checklist')" id="tab-checklist" class="tab-btn text-slate-600 hover:text-green-700 py-3 px-3 text-sm font-medium border-b-2 border-transparent transition-all flex items-center gap-1.5 whitespace-nowrap">
+                <i class="fa-solid fa-square-check text-base"></i> 준비물 & 메모
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-4xl mx-auto px-4 py-6 flex-grow w-full">
+
+        <!-- TAB 1: TIMELINE -->
+        <section id="content-timeline" class="space-y-4">
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-emerald-900 text-sm md:text-base">
+                        <i class="fa-solid fa-circle-info text-emerald-600 mr-1"></i> 당일 일정 체크리스트
+                    </h3>
+                    <p class="text-xs text-emerald-700 mt-0.5">각 단계별 항목을 터치하여 완료 상태로 기록하세요.</p>
+                </div>
+                <div class="text-right">
+                    <span id="progress-text" class="text-xs font-bold text-emerald-800">0 / 8 완료</span>
+                    <div class="w-24 bg-emerald-200 h-2 rounded-full mt-1 overflow-hidden">
+                        <div id="progress-bar" class="bg-emerald-600 h-full w-0 transition-all duration-300"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative border-l-2 border-emerald-200 ml-3 md:ml-4 space-y-6 py-2">
+                
+                <!-- Timeline Item 1 -->
+                <div class="timeline-item relative pl-6 md:pl-8">
+                    <span class="absolute -left-[13px] top-1 bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow">1</span>
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:shadow transition-shadow">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <span class="inline-block bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded mb-1">07:40 ~ 08:25</span>
+                                <h4 class="font-bold text-slate-800 text-base">동산동 출발 ➔ 연신내역 ➔ 용산역 (GTX-A 탑승)</h4>
+                            </div>
+                            <input type="checkbox" onchange="updateProgress()" class="step-check w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer">
+                        </div>
+                        <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                            • <strong>동산동 ➔ 연신내역</strong>: 버스/택시 (약 3.5km, 10~15분)<br>
+                            • <strong>연신내역 ➔ 서울역</strong>: <span class="text-amber-700 font-semibold">GTX-A 이용 (약 5분 소요, 쾌적함)</span><br>
+                            • <strong>서울역 ➔ 용산역</strong>: 지하철 1호선 환승 (약 5분)
+                        </p>
+                        <div class="mt-2 pt-2 border-t border-slate-100 flex items-center text-xs text-slate-500 gap-3">
+                            <span><i class="fa-solid fa-subway text-emerald-600"></i> 소요시간: ~45분</span>
+                            <span><i class="fa-solid fa-ticket text-amber-600"></i> 수단: GTX-A + 지하철</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 2 -->
+                <div class="timeline-item relative pl-6 md:pl-8">
+                    <span class="absolute -left-[13px] top-1 bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow">2</span>
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:shadow transition-shadow">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <span class="inline-block bg-blue-100 text-blue-800 text-xs font-bold px-2 py-0.5 rounded mb-1">08:50 ~ 09:50</span>
+                                <h4 class="font-bold text-slate-800 text-base">용산역 출발 ➔ 공주역 도착 (KTX 탑승)</h4>
+                            </div>
+                            <input type="checkbox" onchange="updateProgress()" class="step-check w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer">
+                        </div>
+                        <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                            • 호남선 KTX 탑승 (용산 ➔ 공주 철도거리 약 130km)<br>
+                            • <strong class="text-red-600">경로 우대 할인</strong>: 만 65세 이상 1인 평일 30% 적용 확인<br>
+                            • 기차 내 시원한 물과 간식 준비
+                        </p>
+                        <div class="mt-2 pt-2 border-t border-slate-100 flex items-center text-xs text-slate-500 gap-3">
+                            <span><i class="fa-solid fa-train text-blue-600"></i> KTX 이동시간: 55~60분</span>
+                            <span><i class="fa-solid fa-id-card text-emerald-600"></i> 신분증 필수 지참</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 3 -->
+                <div class="timeline-item relative pl-6 md:pl-8">
+                    <span class="absolute -left-[13px] top-1 bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow">3</span>
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:shadow transition-shadow">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <span class="inline-block bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded mb-1">09:50 ~ 10:20</span>
+                                <h4 class="font-bold text-slate-800 text-base">공주역 ➔ 신원사 이동 (택시 이용)</h4>
+                            </div>
+                            <input type="checkbox" onchange="updateProgress()" class="step-check w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer">
+                        </div>
+                        <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                            • 공주역 택시 승강장에서 택시 탑승 (약 15.5km)<br>
+                            • 예상 요금: 약 19,000 ~ 21,000원<br>
+                            • 체력 온존을 위해 시내버스 대기 대신 택시 이용 권장
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 4 -->
+                <div class="timeline-item relative pl-6 md:pl-8">
+                    <span class="absolute -left-[13px] top-1 bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow">4</span>
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm border-l-4 border-l-amber-500 hover:shadow transition-shadow">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <span class="inline-block bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded mb-1">10:20 ~ 12:30</span>
+                                <h4 class="font-bold text-slate-800 text-base">신원사 경내 관람 & 점심 식사</h4>
+                            </div>
+                            <input type="checkbox" onchange="updateProgress()" class="step-check w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer">
+                        </div>
+                        <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                            • <strong>10:20 ~ 11:30</strong>: 고즈넉한 신원사 경내 및 <strong>중악단(보물)</strong> 탐방<br>
+                            • <strong>11:30 ~ 12:30</strong>: 신원사 입구 맛집에서 점심 식사<br>
+                            • 추천 식당: <strong>밥꽃하나피업네</strong>(강된장 쌈밥) or <strong>상봉가든</strong>(산채비빔밥)
+                        </p>
+                        <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                            <span class="text-emerald-700 font-medium"><i class="fa-solid fa-bowl-rice mr-1"></i> 등산 전든든하게 식사하기</span>
+                            <button onclick="switchTab('food')" class="text-xs text-emerald-600 font-bold hover:underline">식당 상세보기 ➔</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 5 -->
+                <div class="timeline-item relative pl-6 md:pl-8">
+                    <span class="absolute -left-[13px] top-1 bg-amber-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow">5</span>
+                    <div class="bg-amber-50/60 rounded-xl p-4 border border-amber-300 shadow-sm border-l-4 border-l-amber-600 hover:shadow transition-shadow">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <span class="inline-block bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded mb-1">12:30 ~ 16:30 (하이라이트)</span>
+                                <h4 class="font-bold text-slate-900 text-base">계룡산 횡단 등산 (신원사 ➔ 연천봉 ➔ 갑사)</h4>
+                            </div>
+                            <input type="checkbox" onchange="updateProgress()" class="step-check w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer">
+                        </div>
+                        <div class="text-xs text-slate-700 mt-2 space-y-1.5">
+                            <p>• <strong>12:30~14:30</strong>: 신원사 ➔ 연천봉 고개 (오르막 약 3.2km, ~2시간)</p>
+                            <p>• <strong>14:30~14:50</strong>: 연천봉 고개 ↔ 연천봉 정상 742m (왕복 0.4km, 절경 관람)</p>
+                            <p>• <strong>14:50~16:30</strong>: 연천봉 고개 ➔ 갑사 계곡 하산 (내리막 약 2.7km, ~1시간40분)</p>
+                        </div>
+                        <div class="mt-3 bg-white p-2.5 rounded-lg border border-amber-200 text-xs text-amber-900 flex items-center justify-between">
+                            <span><i class="fa-solid fa-triangle-exclamation text-amber-600 mr-1"></i> 총 거리: <strong>약 6.3km</strong> / 소요: <strong>약 3.5 ~ 4시간</strong></span>
+                            <button onclick="switchTab('hiking')" class="text-emerald-700 font-bold hover:underline">코스 가이드 ➔</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 6 -->
+                <div class="timeline-item relative pl-6 md:pl-8">
+                    <span class="absolute -left-[13px] top-1 bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow">6</span>
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:shadow transition-shadow">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <span class="inline-block bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded mb-1">16:30 ~ 17:30</span>
+                                <h4 class="font-bold text-slate-800 text-base">갑사 경내, 오리숲길 산책 & 찻집 휴식</h4>
+                            </div>
+                            <input type="checkbox" onchange="updateProgress()" class="step-check w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer">
+                        </div>
+                        <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                            • 갑사 철당간(보물) 및 가을 고목나무 오리숲길 (평탄한 숲길 약 1.5km)<br>
+                            • 갑사 입구 찻집에서 따뜻한 수제 차 한잔과 다리 풀기
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 7 -->
+                <div class="timeline-item relative pl-6 md:pl-8">
+                    <span class="absolute -left-[13px] top-1 bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow">7</span>
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:shadow transition-shadow">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <span class="inline-block bg-blue-100 text-blue-800 text-xs font-bold px-2 py-0.5 rounded mb-1">17:30 ~ 18:30</span>
+                                <h4 class="font-bold text-slate-800 text-base">갑사 ➔ 공주역 이동 (택시 약 23km)</h4>
+                            </div>
+                            <input type="checkbox" onchange="updateProgress()" class="step-check w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer">
+                        </div>
+                        <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                            • 갑사 상가단지에서 콜택시 또는 카카오T 호출 (약 30분 소요)<br>
+                            • 예상 요금: 약 26,000 ~ 29,000원
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Timeline Item 8 -->
+                <div class="timeline-item relative pl-6 md:pl-8">
+                    <span class="absolute -left-[13px] top-1 bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow">8</span>
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:shadow transition-shadow">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <span class="inline-block bg-indigo-100 text-indigo-800 text-xs font-bold px-2 py-0.5 rounded mb-1">18:30 ~ 20:10</span>
+                                <h4 class="font-bold text-slate-800 text-base">공주역 KTX 상경 ➔ 서울역/연신내(GTX-A) ➔ 귀가</h4>
+                            </div>
+                            <input type="checkbox" onchange="updateProgress()" class="step-check w-5 h-5 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer">
+                        </div>
+                        <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+                            • <strong>18:30~19:30</strong>: 공주역 ➔ 용산역 KTX 이동<br>
+                            • <strong>19:30~20:10</strong>: 용산역 ➔ 서울역 ➔ 연신내역(GTX-A) ➔ 동산동 자택 도착
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- TAB 2: MAP & ROUTE -->
+        <section id="content-map" class="space-y-4 hidden">
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                            <i class="fa-solid fa-map-location-dot text-emerald-600"></i> 전체 이동 및 등산 코스 지도
+                        </h3>
+                        <p class="text-xs text-slate-500">마커를 터치하여 구간별 정보와 거리를 확인하세요.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="focusMapSection('full')" class="text-xs bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 rounded font-medium text-slate-700">전체 보기</button>
+                        <button onclick="focusMapSection('mountain')" class="text-xs bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1.5 rounded font-medium text-emerald-800">계룡산 등산로만 보기</button>
+                    </div>
+                </div>
+
+                <!-- Leaflet Map Canvas -->
+                <div id="map"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-4 text-xs">
+                    <div class="p-2.5 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div class="font-bold text-blue-900 mb-1"><i class="fa-solid fa-train text-blue-600 mr-1"></i> 수도권 ➔ 공주역</div>
+                        <p class="text-slate-600">GTX-A (연신내-서울역) + KTX (용산-공주) 약 150km</p>
+                    </div>
+                    <div class="p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
+                        <div class="font-bold text-amber-900 mb-1"><i class="fa-solid fa-person-hiking text-amber-600 mr-1"></i> 계룡산 횡단 산행</div>
+                        <p class="text-slate-600">신원사 ➔ 연천봉(742m) ➔ 갑사 계곡 등산로 6.3km</p>
+                    </div>
+                    <div class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg">
+                        <div class="font-bold text-emerald-900 mb-1"><i class="fa-solid fa-taxi text-emerald-600 mr-1"></i> 공주 현지 택시 이동</div>
+                        <p class="text-slate-600">공주역 ↔ 신원사 (15.5km) / 갑사 ↔ 공주역 (23km)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: HIKING DETAIL -->
+        <section id="content-hiking" class="space-y-4 hidden">
+            <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
+                <div>
+                    <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-mountain text-amber-600"></i> 신원사 ➔ 연천봉 ➔ 갑사 등산 코스 분석
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1">
+                        계룡산 남쪽(신원사)에서 북서쪽(갑사)으로 산체를 넘어가며 주요 경관을 관람하는 알찬 코스입니다.
+                    </p>
+                </div>
+
+                <!-- Elevation Chart Visual Simulation -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <h4 class="text-xs font-bold text-slate-700 mb-2 flex items-center justify-between">
+                        <span><i class="fa-solid fa-chart-area text-emerald-600 mr-1"></i> 등산 고도 및 시공간 프로필</span>
+                        <span class="text-slate-500 font-normal">최고 고도: 연천봉 (742m)</span>
+                    </h4>
+                    
+                    <div class="relative h-44 w-full bg-white rounded-lg p-2 border border-slate-200 flex flex-col justify-between overflow-hidden">
+                        <!-- SVG Elevation curve -->
+                        <svg class="w-full h-full" viewBox="0 0 500 120" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#d97706;stop-opacity:0.4" />
+                                    <stop offset="100%" style="stop-color:#16a34a;stop-opacity:0.05" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M 10,105 Q 120,90 250,15 Q 380,80 490,95 L 490,115 L 10,115 Z" fill="url(#grad)" />
+                            <path d="M 10,105 Q 120,90 250,15 Q 380,80 490,95" fill="none" stroke="#b45309" stroke-width="3" />
+                            
+                            <!-- Points -->
+                            <circle cx="10" cy="105" r="4" fill="#16a34a"/>
+                            <circle cx="250" cy="15" r="5" fill="#dc2626"/>
+                            <circle cx="490" cy="95" r="4" fill="#2563eb"/>
+                        </svg>
+
+                        <!-- Labels over path -->
+                        <div class="absolute inset-x-2 bottom-1 flex justify-between text-[11px] font-bold text-slate-700">
+                            <span>신원사 (약 150m)</span>
+                            <span class="text-red-700 font-extrabold -mt-16">연천봉 (742m)</span>
+                            <span>갑사 (약 200m)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Breakdown Cards -->
+                <div class="space-y-3">
+                    <h4 class="font-bold text-sm text-slate-800">구간별 상세 안내</h4>
+
+                    <!-- Section 1 -->
+                    <div class="border border-slate-200 rounded-lg p-3 bg-slate-50">
+                        <div class="flex items-center justify-between font-bold text-sm text-emerald-900">
+                            <span>1구간: 신원사 ➔ 연천봉 고개 (오르막)</span>
+                            <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">3.2km / 약 1시간 40분~2시간</span>
+                        </div>
+                        <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                            보광원과 고왕암 방향을 거쳐 계곡길을 오릅니다. 초반은 평탄하지만 고개 부근으로 갈수록 돌계단 경사가 가빠지므로 스틱을 활용해 천천히 페이스를 유지하세요.
+                        </p>
+                    </div>
+
+                    <!-- Section 2 -->
+                    <div class="border border-amber-200 rounded-lg p-3 bg-amber-50/50">
+                        <div class="flex items-center justify-between font-bold text-sm text-amber-900">
+                            <span>2구간: 연천봉 고개 ↔ 연천봉 정상 (탐방)</span>
+                            <span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded">왕복 0.4km / 약 15~20분</span>
+                        </div>
+                        <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                            연천봉 고개 쉼터에 배낭을 잠시 두고 정상에 다녀올 수 있습니다. 계룡산 8경 중 하나인 연천봉 석각과 사방으로 탁 트인 서해 방향 산세를 조망합니다.
+                        </p>
+                    </div>
+
+                    <!-- Section 3 -->
+                    <div class="border border-slate-200 rounded-lg p-3 bg-slate-50">
+                        <div class="flex items-center justify-between font-bold text-sm text-blue-900">
+                            <span>3구간: 연천봉 고개 ➔ 갑사 (내리막 하산)</span>
+                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">2.7km / 약 1시간 20분~1시간 40분</span>
+                        </div>
+                        <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                            대자암, 신흥암, 용문폭포를 거쳐 갑사 계곡으로 하산하는 코스입니다. 하산 시 무릎 보호대를 착용하고 발을 헛딛지 않도록 안전에 유의하세요.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Safety Guidelines for Seniors -->
+                <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-xs text-red-900 space-y-1">
+                    <h5 class="font-bold text-sm text-red-800 flex items-center gap-1.5 mb-1">
+                        <i class="fa-solid fa-shield-heart text-red-600"></i> 60대 부부 안심 산행 수칙
+                    </h5>
+                    <p>• <strong>무릎 보호대 & 등산스틱</strong>: 하산 시 무릎에 가해지는 충격을 줄여줍니다.</p>
+                    <p>• <strong>수분 및 온온 유지</strong>: 10월 산 정상은 바람이 차가우므로 바람막이 겉옷을 준비하세요.</p>
+                    <p>• <strong>비상 연락처</strong>: 계룡산 국립공원 갑사분소 (041-857-5178), 신원사분소 (041-852-2440)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: FOOD & CAFES -->
+        <section id="content-food" class="space-y-4 hidden">
+            <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
+                <div>
+                    <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-utensils text-emerald-600"></i> 신원사 입구 점심 식사 장소
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1">등산 전 속이 편안하고 영양이 풍부한 한식 메뉴 추천입니다.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Restaurant 1 -->
+                    <div class="border border-emerald-200 rounded-xl p-4 bg-emerald-50/30 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="bg-emerald-600 text-white text-xs font-bold px-2.5 py-0.5 rounded">추천 1 (건강 한정식)</span>
+                                <span class="text-xs text-emerald-700 font-bold"><i class="fa-solid fa-star text-amber-500"></i> 농가맛집</span>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-base">밥꽃하나피었네</h4>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                                공주 향토 음식 지정점으로, 정갈한 숯불고기 쌈밥과 수제 강된장, 제철 나물 반찬이 깔끔하게 차려집니다. 부모님 모시고 가기 최적의 분위기입니다.
+                            </p>
+                            <div class="mt-3 text-xs space-y-1 text-slate-700">
+                                <p>• <strong>주요메뉴</strong>: 밥꽃 떡갈비 정식, 강된장 쌈밥정식</p>
+                                <p>• <strong>위치</strong>: 공주시 계룡면 신원사로 (신원사 차로 3분)</p>
+                                <p>• <strong>전화번호</strong>: 041-855-0688</p>
+                            </div>
+                        </div>
+                        <a href="tel:041-855-0688" class="mt-4 block text-center bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 rounded-lg transition-colors">
+                            <i class="fa-solid fa-phone mr-1"></i> 식당 전화 걸기
+                        </a>
+                    </div>
+
+                    <!-- Restaurant 2 -->
+                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="bg-slate-700 text-white text-xs font-bold px-2.5 py-0.5 rounded">추천 2 (산채 전문)</span>
+                                <span class="text-xs text-slate-600">신원사 바로 앞</span>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-base">계룡산 신원사 상봉가든</h4>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                                신원사 등산로 입구 바로 근처에 위치하여 이동 동선이 매우 편리합니다. 산채비빔밥, 산나물전, 더덕구이 등 클래식한 산채 음식을 즐기실 수 있습니다.
+                            </p>
+                            <div class="mt-3 text-xs space-y-1 text-slate-700">
+                                <p>• <strong>주요메뉴</strong>: 산채비빔밥, 더덕구이 정식, 해물파전</p>
+                                <p>• <strong>위치</strong>: 신원사 주차장 인근 도보 이동 가능</p>
+                                <p>• <strong>전화번호</strong>: 041-852-4523</p>
+                            </div>
+                        </div>
+                        <a href="tel:041-852-4523" class="mt-4 block text-center bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold py-2 rounded-lg transition-colors">
+                            <i class="fa-solid fa-phone mr-1"></i> 식당 전화 걸기
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Gapsa Teahouse Info -->
+                <div class="border border-amber-200 rounded-xl p-4 bg-amber-50/40">
+                    <h4 class="font-bold text-amber-900 text-sm flex items-center gap-2 mb-1">
+                        <i class="fa-solid fa-mug-hot text-amber-600"></i> 하산 후 갑사 입구 찻집 쉼터
+                    </h4>
+                    <p class="text-xs text-amber-800 leading-relaxed">
+                        갑사 오리숲길 하산 지점 상가 단지에는 가을 정원 뷰를 자랑하는 전통 찻집과 카페들이 조성되어 있습니다. 하산 후 따뜻한 쌍화차나 오미자차를 마시며 수고한 다리를 편안하게 풀어주세요.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: BUDGET & COSTS -->
+        <section id="content-budget" class="space-y-4 hidden">
+            <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
+                <div>
+                    <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-calculator text-emerald-600"></i> 예상 경비 및 교통 비용 산출 (2인 기준)
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1">
+                        KTX 경로 할인(1인 30% 적용) 및 대중교통, 택시 이용 요금 합산표입니다.
+                    </p>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                                <th class="p-2.5">항목</th>
+                                <th class="p-2.5">구분 / 세부내역</th>
+                                <th class="p-2.5 text-right">금액</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 text-slate-700">
+                            <tr>
+                                <td class="p-2.5 font-bold">GTX-A + 시내교통</td>
+                                <td class="p-2.5">연신내 ↔ 서울역 GTX + 동산동 버스/지하철 (2인 왕복)</td>
+                                <td class="p-2.5 text-right font-medium">약 14,000원</td>
+                            </tr>
+                            <tr class="bg-blue-50/40">
+                                <td class="p-2.5 font-bold text-blue-900">KTX 승차권 (왕복)</td>
+                                <td class="p-2.5 text-blue-900">
+                                    용산 ↔ 공주 왕복<br>
+                                    • 일반 1인: 50,200원<br>
+                                    • <span class="font-bold text-red-600">경로 우대 1인(30%): 35,000원</span>
+                                </td>
+                                <td class="p-2.5 text-right font-bold text-blue-900">85,200원</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2.5 font-bold">공주 현지 택시비 1</td>
+                                <td class="p-2.5">공주역 ➔ 신원사 (약 15.5km)</td>
+                                <td class="p-2.5 text-right font-medium">약 20,000원</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2.5 font-bold">공주 현지 택시비 2</td>
+                                <td class="p-2.5">갑사 ➔ 공주역 (약 23km)</td>
+                                <td class="p-2.5 text-right font-medium">약 28,000원</td>
+                            </tr>
+                            <tr class="bg-emerald-50/40">
+                                <td class="p-2.5 font-bold text-emerald-900">식대 및 차</td>
+                                <td class="p-2.5 text-emerald-900">신원사 점심 식사 + 갑사 찻집 (2인)</td>
+                                <td class="p-2.5 text-right font-medium text-emerald-900">약 45,000원</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-emerald-800 text-white font-bold text-sm">
+                                <td class="p-3 rounded-l-lg" colspan="2">당일 총 예상 경비 (2인)</td>
+                                <td class="p-3 text-right rounded-r-lg text-amber-300">약 192,200원</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900 flex items-center gap-2">
+                    <i class="fa-solid fa-lightbulb text-amber-600 text-base"></i>
+                    <span>코레일앱(코레일톡) 또는 역 창구에서 예매 시 <strong>경로 우대 옵션</strong>을 선택하시면 자동으로 30% 할인이 적용됩니다.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 6: CHECKLIST & NOTES -->
+        <section id="content-checklist" class="space-y-4 hidden">
+            <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm space-y-4">
+                <div>
+                    <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-emerald-600"></i> 여행 지참 준비물 체크리스트
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1">체크한 항목은 브라우저에 자동 저장됩니다.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs" id="checklist-container">
+                    <!-- Dynamic Checklist items loaded by JS -->
+                </div>
+
+                <!-- Custom Notes Area -->
+                <div class="pt-4 border-t border-slate-200 space-y-2">
+                    <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-note-sticky text-amber-600"></i> 나의 여행 메모
+                    </h4>
+                    <textarea id="user-notes" oninput="saveNotes()" placeholder="예매번호, 기차 좌석 번호, 기억할 사항 등을 적어두세요..." class="w-full h-28 p-3 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+                    <p class="text-[11px] text-slate-400 text-right">메모 내용이 자동으로 저장됩니다.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Emergency / Taxi Modal -->
+    <div id="emergency-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-xl">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-phone-volume text-red-600"></i> 비상연락망 & 택시 호출
+                </h3>
+                <button onclick="toggleModal('emergency-modal')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="space-y-2 text-xs">
+                <a href="tel:041-855-8255" class="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 flex items-center justify-between font-bold text-slate-800">
+                    <span><i class="fa-solid fa-taxi text-emerald-600 mr-2"></i> 공주 브랜드 콜택시</span>
+                    <span class="text-emerald-700">041-855-8255</span>
+                </a>
+                <a href="tel:041-857-5178" class="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 flex items-center justify-between font-bold text-slate-800">
+                    <span><i class="fa-solid fa-tree text-green-600 mr-2"></i> 계룡산 국립공원 갑사분소</span>
+                    <span class="text-green-700">041-857-5178</span>
+                </a>
+                <a href="tel:041-852-2440" class="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 flex items-center justify-between font-bold text-slate-800">
+                    <span><i class="fa-solid fa-tree text-green-600 mr-2"></i> 계룡산 국립공원 신원사분소</span>
+                    <span class="text-green-700">041-852-2440</span>
+                </a>
+                <a href="tel:119" class="p-3 bg-red-50 hover:bg-red-100 rounded-xl border border-red-200 flex items-center justify-between font-bold text-red-900">
+                    <span><i class="fa-solid fa-kit-medical text-red-600 mr-2"></i> 산악 구조대 / 119</span>
+                    <span class="text-red-700">119</span>
+                </a>
+            </div>
+
+            <button onclick="toggleModal('emergency-modal')" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold py-2.5 rounded-xl">
+                닫기
+            </button>
+        </div>
+    </div>
+
+    <footer class="bg-slate-900 text-slate-400 text-xs py-6 mt-12 border-t border-slate-800">
+        <div class="max-w-4xl mx-auto px-4 text-center space-y-2">
+            <p class="font-medium text-slate-300">60대 부부 맞춤 10월 7일 계룡산 당일 여행 웹앱</p>
+            <p class="text-[11px] text-slate-500">GitHub & Vercel 단일 파일 배포용 (`계룡산261007.html`)</p>
+        </div>
+    </footer>
+
+    <script>
+        let mapInstance = null;
+        let mapMarkers = [];
+
+        // Tab Navigation Switcher
+        function switchTab(tabId) {
+            const tabs = ['timeline', 'map', 'hiking', 'food', 'budget', 'checklist'];
+            tabs.forEach(id => {
+                const btn = document.getElementById(`tab-${id}`);
+                const content = document.getElementById(`content-${id}`);
+                if (id === tabId) {
+                    btn?.classList.add('active');
+                    content?.classList.remove('hidden');
+                } else {
+                    btn?.classList.remove('active');
+                    content?.classList.add('hidden');
+                }
+            });
+
+            // If switching to map, trigger leafet resize
+            if (tabId === 'map') {
+                setTimeout(() => {
+                    if (!mapInstance) {
+                        initMap();
+                    } else {
+                        mapInstance.invalidateSize();
+                    }
+                }, 150);
+            }
+        }
+
+        // Modal Toggle
+        function toggleModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal?.classList.toggle('hidden');
+        }
+
+        function initMap() {
+            // Center around Gyeryongsan area
+            mapInstance = L.map('map').setView([36.348, 127.170], 11);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(mapInstance);
+
+            // Locations
+            const locations = [
+                { name: "용산역 (KTX)", lat: 37.529, lng: 126.964, icon: "🚆", color: "#2563eb" },
+                { name: "공주역 (KTX)", lat: 36.353, lng: 127.147, icon: "🚅", color: "#1d4ed8" },
+                { name: "신원사 (출발지)", lat: 36.326, lng: 127.185, icon: "⛩️", color: "#16a34a" },
+                { name: "연천봉 (742m 정상)", lat: 36.345, lng: 127.202, icon: "⛰️", color: "#dc2626" },
+                { name: "갑사 (도착지)", lat: 36.363, lng: 127.185, icon: "🍁", color: "#d97706" }
+            ];
+
+            // Add Markers
+            locations.forEach(loc => {
+                const marker = L.marker([loc.lat, loc.lng]).addTo(mapInstance)
+                    .bindPopup(`<b>${loc.icon} ${loc.name}</b>`);
+                mapMarkers.push(marker);
+            });
+
+            // Hiking Trail Polyline (Shinwonsa -> Yeoncheonbong -> Gapsa)
+            const hikingCoords = [
+                [36.326, 127.185], // Shinwonsa
+                [36.345, 127.202], // Yeoncheonbong
+                [36.363, 127.185]  // Gapsa
+            ];
+
+            const hikingPolyline = L.polyline(hikingCoords, {
+                color: '#d97706',
+                weight: 5,
+                opacity: 0.9,
+                dashArray: '8, 8'
+            }).addTo(mapInstance);
+
+            hikingPolyline.bindPopup("<b>계룡산 횡단 등산로 (약 6.3km)</b>");
+        }
+
+        function focusMapSection(type) {
+            if (!mapInstance) return;
+            if (type === 'mountain') {
+                mapInstance.setView([36.345, 127.190], 13);
+            } else {
+                mapInstance.setView([36.348, 127.170], 11);
+            }
+        }
+
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('.step-check');
+            let completed = 0;
+            checkboxes.forEach(cb => {
+                if (cb.checked) completed++;
+            });
+
+            const total = checkboxes.length;
+            const progressText = document.getElementById('progress-text');
+            const progressBar = document.getElementById('progress-bar');
+            const tripStatus = document.getElementById('trip-status');
+
+            if (progressText) progressText.innerText = `${completed} / ${total} 완료`;
+            if (progressBar) progressBar.style.width = `${(completed / total) * 100}%`;
+
+            if (completed === 0) {
+                if (tripStatus) tripStatus.innerText = "일정 준비중";
+            } else if (completed < total) {
+                if (tripStatus) tripStatus.innerText = "여행 진행중 🚶";
+            } else {
+                if (tripStatus) tripStatus.innerText = "여행 완료! 🎉";
+            }
+        }
+
+        // Preparation Items
+        const prepItems = [
+            "만 65세 이상 신분증 (KTX 할인용)",
+            "무릎 보호대 & 등산 스틱 2자루",
+            "바람막이 겉옷 (정상용)",
+            "생수 2병 & 이온음료",
+            "비상 간식 (양갱, 견과류, 초콜릿)",
+            "보조 배터리 & 스마트폰 충전선",
+            "개인 상비약 (관절약, 밴드)",
+            "KTX 승차권 앱/출력물"
+        ];
+
+        function initChecklist() {
+            const container = document.getElementById('checklist-container');
+            if (!container) return;
+
+            const savedState = JSON.parse(localStorage.getItem('gyeryong_prep_state') || '{}');
+
+            container.innerHTML = prepItems.map((item, idx) => {
+                const isChecked = savedState[idx] ? 'checked' : '';
+                return `
+                    <label class="flex items-center gap-2.5 p-3 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 cursor-pointer">
+                        <input type="checkbox" onchange="saveChecklistState()" data-idx="${idx}" class="prep-cb w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500" ${isChecked}>
+                        <span class="text-slate-700 font-medium">${item}</span>
+                    </label>
+                `;
+            }).join('');
+        }
+
+        function saveChecklistState() {
+            const checkboxes = document.querySelectorAll('.prep-cb');
+            const state = {};
+            checkboxes.forEach(cb => {
+                const idx = cb.getAttribute('data-idx');
+                state[idx] = cb.checked;
+            });
+            localStorage.setItem('gyeryong_prep_state', JSON.stringify(state));
+        }
+
+        function saveNotes() {
+            const notes = document.getElementById('user-notes')?.value;
+            localStorage.setItem('gyeryong_user_notes', notes || '');
+        }
+
+        function loadNotes() {
+            const saved = localStorage.getItem('gyeryong_user_notes');
+            const textarea = document.getElementById('user-notes');
+            if (textarea && saved) {
+                textarea.value = saved;
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            initChecklist();
+            loadNotes();
+        });
+    </script>
+</body>
+</html>
